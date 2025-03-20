@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Predoctor</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#7d4997">
+    <meta name="description" content="Food recommendations based on menstruation cycle">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Garuda">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icon-192x192.png', _external=True) }}" sizes="192x192">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icon-192x192.png', _external=True) }}">
+    
+    <!-- Standard CSS and libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" id="main-css">
+    <!-- Theme-specific CSS files (one will be disabled based on user preference) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/LightStyles.css') }}" id="light-theme-css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/darkstyless.css') }}" id="dark-theme-css" disabled>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
+    <style>
+    /* Inline fix for page transitions */
+    .page-section {
+        display: none;
+    }
+    .page-section.active-section {
+        display: block !important;
+    }
+    #hero-section {
+        display: block;
+    }
+    
+    /* Mobile fixes */
+    @media (max-width: 768px) {
+        .auth-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .main-nav {
+            width: 100%;
+        }
+        .main-nav ul {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0;
+        }
+    }
+    
+    /* Theme Toggle Styles */
+    .theme-toggle-wrapper {
+        position: relative;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    
+    .theme-toggle {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+    }
+    
+    .theme-toggle-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        width: 50px;
+        height: 26px;
+        background: linear-gradient(90deg, #f15f79 0%, #7d4997 100%);
+        border-radius: 100px;
+        position: relative;
+        transition: all 0.4s;
+        padding: 5px;
+    }
+    
+    .theme-toggle-label .fa-sun {
+        color: #f1c40f;
+        font-size: 14px;
+        transform: scale(1);
+        transition: transform 0.3s ease;
+    }
+    
+    .theme-toggle-label .fa-moon {
+        color: #f0f0f0;
+        font-size: 14px;
+        transform: scale(1);
+        transition: transform 0.3s ease;
+    }
+    
+    .theme-toggle:checked + .theme-toggle-label .fa-moon {
+        transform: scale(1.15);
+        color: #ffffff;
+    }
+    
+    .theme-toggle:not(:checked) + .theme-toggle-label .fa-sun {
+        transform: scale(1.15);
+    }
+    
+    .theme-toggle-ball {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-color: white;
+        border-radius: 50%;
+        top: 3px;
+        left: 3px;
+        transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), box-shadow 0.3s;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .theme-toggle:checked + .theme-toggle-label .theme-toggle-ball {
+        transform: translateX(24px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+    }
+    
+    /* Animation for toggle */
+    .theme-toggle-label:active {
+        transform: scale(0.95);
+    }
+    
+    .theme-toggle-label:active .theme-toggle-ball {
+        width: 24px;
+        border-radius: 15px;
+        transform: translateX(12px);
+    }
+    
+    /* Smooth theme transition */
+    .theme-transition * {
+        transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease !important;
+    }
+    
+    /* Enhanced theme transition effects */
+    body.theme-transition {
+        animation: theme-fade 0.6s ease;
+    }
+    
+    @keyframes theme-fade {
+        0% { opacity: 1; }
+        20% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
+    
+    /* Apply transitions to specific elements for better performance */
+    .app-header, .card-bg-color, .btn, .input-group, 
+    .food-info-card, .impact-card, .chat-container, 
+    .history-list, .about-content, .app-footer {
+        transition: background-color 0.4s ease-out, border-color 0.4s ease-out, color 0.4s ease-out, box-shadow 0.4s ease-out;
+    }
+    
+    @media (max-width: 576px) {
+        .theme-toggle-wrapper {
+            margin-right: 5px;
+        }
+        
+        .theme-toggle-label {
+            width: 40px;
+            height: 22px;
+        }
+        
+        .theme-toggle-ball {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .theme-toggle:checked + .theme-toggle-label .theme-toggle-ball {
+            transform: translateX(18px);
+        }
+    }
+
+    /* Restore the smooth animation styles */
+    .page-section {
+        transition: transform 0.25s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.25s ease-out !important;
+    }
+
+    .bottom-nav-item {
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    }
+
+    .bottom-nav-item.active {
+        transform: translateY(-3px) !important;
+    }
+    </style>
+</head>
+<body>
+    <div class="app-container" style="min-height: 100vh;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <h1>Predoctor <span>1.1</span></h1>
+                    </div>
+                    <nav class="main-nav">
+                        <ul>
+                            <li><a href="#predictor" class="active">Predictor</a></li>
+                            <li><a href="#chatbot">NutriGuide</a></li>
+                            <li><a href="#moodmotion">MoodMotion</a></li>
+                            <li><a href="#history">History</a></li>
+                            <li><a href="#about">About</a></li>
+                        </ul>
+                    </nav>
+                     <div class="auth-actions">
+                        <!-- Theme Toggle Button -->
+                        <div class="theme-toggle-wrapper me-2">
+                            <input type="checkbox" class="theme-toggle" id="theme-toggle">
+                            <label for="theme-toggle" class="theme-toggle-label">
+                                <i class="fas fa-sun"></i>
+                                <i class="fas fa-moon"></i>
+                                <span class="theme-toggle-ball"></span>
+                            </label>
+                        </div>
+                        <div id="auth-status-logged-out" class="active" style="display: flex;">
+                            <button id="login-btn" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+                            <button id="register-btn" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#registerModal">Register</button>
+                        </div>
+                        <div id="auth-status-logged-in" style="display: none;">
+                            <span id="welcome-user">User</span>
+                            <button id="logout-btn" class="btn btn-outline-danger btn-sm">Logout</button>
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main" id="swipeable-content">
+            <!-- Replace page dots with bottom navigation bar -->
+            <div class="bottom-nav" id="bottom-nav">
+                <div class="bottom-nav-item active" data-section="predictor">
+                    <i class="fas fa-utensils"></i>
+                    <span>Predictor</span>
+                </div>
+                <div class="bottom-nav-item" data-section="chatbot">
+                    <i class="fas fa-robot"></i>
+                    <span>NutriGuide</span>
+                </div>
+                <div class="bottom-nav-item" data-section="moodmotion">
+                    <i class="fas fa-walking"></i>
+                    <span>MoodMotion</span>
+                </div>
+                <div class="bottom-nav-item" data-section="history">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </div>
+                <div class="bottom-nav-item" data-section="about">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
+                </div>
+            </div>
+            
+            <!-- Hero Section -->
+            <section id="hero-section" class="hero-section page-section animate__animated animate__fadeIn">
+                <div class="container">
+                    <div class="hero-content">
+                        <h2>Discover How Foods Impact Your Menstrual Cycle</h2>
+                        <div class="hero-description">
+                            <p>Our AI-powered tool predicts how different foods affect symptoms like cramps, bloating, headaches, mood swings, fatigue, and acne.</p>
+                        </div>
+                        <a href="#predictor" class="btn btn-primary">Get Started <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Predictor Section -->
+            <section id="predictor" class="predictor-section page-section animate__animated">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>Food Impact Predictor</h2>
+                        <p style="color: #ffffff;">Enter a food item to see how it might affect your menstrual symptoms</p>
+                    </div>
+                    
+                    <div class="predictor-form">
+                        <div class="input-group mb-3">
+                            <input type="text" id="food-input" class="form-control" placeholder="Enter a food (e.g., Spinach, Chocolate, Almonds)">
+                            <button id="predict-btn" class="btn btn-primary">
+                                <span id="predict-btn-text">Predict</span>
+                                <span id="loading-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="prediction-results" class="prediction-results d-none">
+                        <div class="food-info-card">
+                            <div class="food-header">
+                                <h3 id="result-food-name-with-quantity"></h3>
+                                <span class="food-category" id="result-food-category"></span>
+                            </div>
+                            <div class="food-details">
+                                <div class="detail-row">
+                                    <div class="detail-label">Category:</div>
+                                    <div class="detail-value" id="result-category"></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Subcategory:</div>
+                                    <div class="detail-value" id="result-subcategory"></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Processing Level:</div>
+                                    <div class="detail-value" id="result-processing"></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Calories:</div>
+                                    <div class="detail-value" id="result-calories"></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Glycemic Index:</div>
+                                    <div class="detail-value" id="result-glycemic"></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Inflammatory Index:</div>
+                                    <div class="detail-value" id="result-inflammatory"></div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Allergens:</div>
+                                    <div class="detail-value" id="result-allergens"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="impact-card">
+                            <h3>Predicted Impact on Symptoms</h3>
+                            <div class="impact-indicators">
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="impact-label">Cramps</div>
+                                    <div class="impact-value" id="impact-cramps"></div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-wind"></i>
+                                    </div>
+                                    <div class="impact-label">Bloating</div>
+                                    <div class="impact-value" id="impact-bloating"></div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-head-side-virus"></i>
+                                    </div>
+                                    <div class="impact-label">Headache</div>
+                                    <div class="impact-value" id="impact-headache"></div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-face-sad-tear"></i>
+                                    </div>
+                                    <div class="impact-label">Mood Swings</div>
+                                    <div class="impact-value" id="impact-mood"></div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-battery-quarter"></i>
+                                    </div>
+                                    <div class="impact-label">Fatigue</div>
+                                    <div class="impact-value" id="impact-fatigue"></div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-allergies"></i>
+                                    </div>
+                                    <div class="impact-label">Acne</div>
+                                    <div class="impact-value" id="impact-acne"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add AI explanation section here -->
+                    <div id="ai-explanation-section" class="d-none">
+                        <div class="ai-explanation-prompt">
+                            Want to understand how and why we got these results with AI?
+                        </div>
+                        <button id="explain-btn" class="explain-btn"><i class="fas fa-robot"></i> Get AI Explanation</button>
+                        <div id="explanation-content" class="explanation-content">
+                            <h3 class="explanation-header">AI-Generated Explanation</h3>
+                            <ul class="explanation-points">
+                                <li id="explanation-loading">Loading AI analysis...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chatbot Section -->
+            <section id="chatbot" class="chatbot-section page-section animate__animated">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>NutriGuide</h2>
+                        <p style="color: #ffffff;">Chat with our nutrition assistant about menstrual health and food impacts</p>
+                    </div>
+                    
+                    <div class="chatbot-interface">
+                        <div id="chat-messages" class="chat-messages">
+                            <div class="message bot">
+                                <div class="message-content">
+                                    <p>Hi there! I'm your NutriGuide assistant. I can answer questions about nutrition, menstrual health, and how different foods might affect your symptoms. What would you like to know?</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <div class="input-group">
+                                <input type="text" id="chat-input" class="form-control" placeholder="Type your question here...">
+                                <button id="send-chat-btn" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- MoodMotion Section -->
+            <section id="moodmotion" class="moodmotion-section page-section animate__animated">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>MoodMotion</h2>
+                        <p style="color: #ffffff;">Find the perfect activity for your cycle phase and emotional state</p>
+                    </div>
+                    
+                    <div class="moodmotion-form card shadow-sm">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="cycle-phase" class="form-label">Current Cycle Phase:</label>
+                                <select id="cycle-phase" class="form-select">
+                                    <option value="" selected disabled>Select your cycle phase</option>
+                                    <option value="Menstrual (Day 1-5)">Menstrual (Day 1-5)</option>
+                                    <option value="Follicular (Day 6-11)">Follicular (Day 6-11)</option>
+                                    <option value="Ovulatory (Day 12-16)">Ovulatory (Day 12-16)</option>
+                                    <option value="Luteal (Day 17-28)">Luteal (Day 17-28)</option>
+                                    <option value="Premenstrual (3-5 days before period)">Premenstrual (3-5 days before period)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="stress-level" class="form-label">Current Stress Level (1-10):</label>
+                                <select id="stress-level" class="form-select">
+                                    <option value="" selected disabled>Select your stress level</option>
+                                    <option value="1">1 - Very Low</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5 - Moderate</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10 - Very High</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="emotion" class="form-label">Current Emotional State:</label>
+                                <select id="emotion" class="form-select">
+                                    <option value="" selected disabled>Select your current emotion</option>
+                                    <option value="Happy">Happy</option>
+                                    <option value="Sad">Sad</option>
+                                    <option value="Angry">Angry</option>
+                                    <option value="Anxious">Anxious</option>
+                                    <option value="Irritable">Irritable</option>
+                                    <option value="Stressed">Stressed</option>
+                                    <option value="Tired">Tired</option>
+                                    <option value="Calm">Calm</option>
+                                    <option value="Energetic">Energetic</option>
+                                    <option value="Overwhelmed">Overwhelmed</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="additional-factors" class="form-label">Additional Factors (optional):</label>
+                                <textarea id="additional-factors" class="form-control" rows="2" placeholder="Additional information (e.g., specific symptoms, time availability, preferences)"></textarea>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button id="recommend-btn" class="btn btn-primary">
+                                    <span>Recommend Activity</span>
+                                    <i class="fas fa-heart ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="moodmotion-loading" class="d-none justify-content-center my-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Finding the perfect activity for you...</span>
+                    </div>
+                    
+                    <div id="moodmotion-results" class="mt-4"></div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="history" class="history-section page-section animate__animated">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>Your History</h2>
+                        <p style="color: #ffffff;">View your past food predictions and chat conversations</p>
+                    </div>
+                    
+                    <ul class="nav nav-tabs" id="historyTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="predictions-tab" data-bs-toggle="tab" data-bs-target="#predictions-tab-pane" type="button" role="tab" aria-controls="predictions-tab-pane" aria-selected="true">
+                                <i class="fas fa-utensils me-1"></i> Food Predictions
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="chats-tab" data-bs-toggle="tab" data-bs-target="#chats-tab-pane" type="button" role="tab" aria-controls="chats-tab-pane" aria-selected="false">
+                                <i class="fas fa-comments me-1"></i> Chat History
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="moodmotion-tab" data-bs-toggle="tab" data-bs-target="#moodmotion-tab-pane" type="button" role="tab" aria-controls="moodmotion-tab-pane" aria-selected="false">
+                                <i class="fas fa-walking me-1"></i> Activity History
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="predictions-tab-pane" role="tabpanel" aria-labelledby="predictions-tab">
+                            <div id="history-list" class="history-list mt-4">
+                                <!-- Dynamic history items will be inserted here -->
+                            </div>
+                            <div id="no-history" class="text-center p-4 d-none">
+                                <i class="fas fa-history fa-2x mb-3 text-muted"></i>
+                                <p>No prediction history yet. Try predicting some foods!</p>
+                            </div>
+                            <div class="text-center mt-3">
+                                <button id="clear-predictions" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Clear Prediction History
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="chats-tab-pane" role="tabpanel" aria-labelledby="chats-tab">
+                            <div id="chat-history-list" class="chat-history-list mt-4">
+                                <!-- Dynamic chat history items will be inserted here -->
+                            </div>
+                            <div id="no-chat-history" class="text-center p-4 d-none">
+                                <i class="fas fa-comments fa-2x mb-3 text-muted"></i>
+                                <p>No chat history yet. Try chatting with NutriGuide!</p>
+                            </div>
+                            <div class="text-center mt-3">
+                                <button id="clear-chats" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Clear Chat History
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="moodmotion-tab-pane" role="tabpanel" aria-labelledby="moodmotion-tab">
+                            <div id="moodmotion-history-list" class="moodmotion-history-list mt-4">
+                                <!-- Dynamic MoodMotion history items will be inserted here -->
+                            </div>
+                            <div id="no-moodmotion-history" class="text-center p-4 d-none">
+                                <i class="fas fa-walking fa-2x mb-3 text-muted"></i>
+                                <p>No activity history yet. Try MoodMotion to get personalized activity recommendations!</p>
+                            </div>
+                            <div class="text-center mt-3">
+                                <button id="clear-moodmotion" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Clear Activity History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- About Section -->
+            <section id="about" class="about-section page-section animate__animated">
+                <div class="container">
+                    <div class="section-header">
+                        <h2>About predoctor</h2>
+                        <p>Understanding the science behind our predictions</p>
+                    </div>
+                    
+                    <div class="about-content">
+                        <div class="about-text">
+                            <h3>Project Overview</h3>
+                            <p>Predoctor is an AI-powered food impact predictor that uses machine learning to analyze how different foods affect menstrual symptoms. Our model was trained on a comprehensive dataset of food attributes and their observed effects on various symptoms.</p>
+                            
+                            <h3>How It Works</h3>
+                            <p>When you enter a food name, our system:</p>
+                            <ol>
+                                <li>Uses advanced AI to gather nutritional information about the food</li>
+                                <li>Processes this data through our trained machine learning model</li>
+                                <li>Predicts the likely impact on six common menstrual symptoms</li>
+                   
+                            </ol>
+                            
+                          <!--  <h3>Model Performance</h3>
+                             <p>Our models were evaluated using ROC curves, accuracy, precision, and recall metrics. The best performing model was selected for use in this application.</p>
+                            
+                            <div class="model-info">
+                                <h4>ROC Curves</h4>
+                                <img src="{{ url_for('static', filename='images/roc_curves.png') }}" alt="ROC Curves" class="img-fluid">
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <!-- <div class="container">
+                <div class="footer-content">
+                    <div class="footer-logo">
+                        <h2>Garuda<span>4.0</span></h2>
+                    </div>
+                    <div class="footer-links">
+                        <ul>
+                            <li><a href="#predictor">Predictor</a></li>
+                            <li><a href="#chatbot">AI Chat</a></li>
+                            <li><a href="#history">History</a></li>
+                            <li><a href="#about">About</a></li>
+                        </ul>
+                    </div> -->
+                    <div style="text-align: center;">
+                        <p>&copy; Made by team | Garuda </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="login-username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="login-username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="login-password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="login-password" required>
+                        </div>
+                        <div class="alert alert-danger d-none" id="login-error"></div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <p>Don't have an account? <a href="#" id="switch-to-register">Register</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">Register</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="register-form">
+                        <div class="mb-3">
+                            <label for="register-username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="register-username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="register-email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="register-email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="register-password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="register-password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="register-confirm-password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="register-confirm-password" required>
+                        </div>
+                        <div class="alert alert-danger d-none" id="register-error"></div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Register</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <p>Already have an account? <a href="#" id="switch-to-login">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Quick navigation fix -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Direct fix for navigation
+        const navLinks = document.querySelectorAll('.main-nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1); // Remove #
+                const sections = document.querySelectorAll('.page-section');
+                
+                // Hide all sections
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show target section
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                    
+                    // Update active nav
+                    navLinks.forEach(navLink => navLink.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Get Started button
+        const getStartedBtn = document.querySelector('.hero-section .btn-primary');
+        if (getStartedBtn) {
+            getStartedBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Hide all sections
+                const sections = document.querySelectorAll('.page-section');
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show predictor section
+                const predictorSection = document.getElementById('predictor');
+                if (predictorSection) {
+                    predictorSection.style.display = 'block';
+                    
+                    // Update active nav
+                    document.querySelectorAll('.main-nav a').forEach(navLink => navLink.classList.remove('active'));
+                    document.querySelector('.main-nav a[href="#predictor"]').classList.add('active');
+                }
+            });
+        }
+    });
+    </script>
+    
+    <!-- PWA Debug Section (commented out)
+    <div id="pwa-debug" style="display: none !important; visibility: hidden;">
+        <div>PWA Status: <span id="pwa-status">Checking...</span></div>
+        <div>Service Worker: <span id="sw-status">Checking...</span></div>
+        <div>Install Prompt: <span id="install-status">Waiting...</span></div>
+        <div>HTTPS: <span id="https-status">Checking...</span></div>
+        <div>Manifest: <span id="manifest-status">Checking...</span></div>
+        <div>Icons: <span id="icons-status">Checking...</span></div>
+        <button onclick="this.parentNode.style.display='none'" style="background: #555; color: white; border: none; padding: 5px 10px; margin-top: 5px; border-radius: 3px;">Hide</button>
+        <button onclick="checkPwaRequirements()" style="background: #7d4997; color: white; border: none; padding: 5px 10px; margin-top: 5px; border-radius: 3px;">Check Requirements</button>
+    </div>
+    -->
+    
+    <script>
+        // PWA status check - hidden
+        if ('serviceWorker' in navigator) {
+            // We still register the service worker but don't show UI elements
+            navigator.serviceWorker.getRegistration().then(registration => {
+                console.log('Service worker registered:', !!registration);
+            });
+        }
+        
+        // PWA install prompt handler - no UI updates
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('Install prompt ready');
+        });
+        
+        // PWA requirements function - just for console
+        function checkPwaRequirements() {
+            // Check in console only
+            console.log('HTTPS:', window.location.protocol === 'https:' ? 'Yes' : 'No (Required)');
+            
+            fetch('/manifest.json')
+                .then(response => {
+                    console.log('Manifest:', response.ok ? 'Found' : 'Not found');
+                })
+                .catch(() => {
+                    console.log('Manifest: Error');
+                });
+                
+            const img192 = new Image();
+            img192.onload = () => { 
+                console.log('Icons: Found');
+            };
+            img192.onerror = () => {
+                console.log('Icons: Error');
+            };
+            img192.src = '{{ url_for("static", filename="images/icon-192x192.png") }}';
+        }
+    </script>
+    
+    <!-- PWA Service Worker Registration -->
+    <!-- <script src="{{ url_for('static', filename='js/pwa.js') }}"></script> -->
+    
+    <!-- Theme Toggle Handler -->
+    <script>
+    (function() {
+        // DOM elements
+        const themeToggle = document.getElementById('theme-toggle');
+        const lightThemeCSS = document.getElementById('light-theme-css');
+        const darkThemeCSS = document.getElementById('dark-theme-css');
+        
+        // Theme constants
+        const THEME_STORAGE_KEY = 'preferredTheme';
+        const DARK_THEME = 'dark';
+        const LIGHT_THEME = 'light';
+        
+        // Get saved theme from localStorage or use system preference
+        function getInitialTheme() {
+            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+            
+            if (savedTheme) {
+                return savedTheme;
+            }
+            
+            // Use dark theme as default instead of checking system preference
+            return DARK_THEME;
+        }
+        
+        // Apply theme to the DOM
+        function applyTheme(theme) {
+            if (theme === DARK_THEME) {
+                lightThemeCSS.disabled = true;
+                darkThemeCSS.disabled = false;
+                themeToggle.checked = true;
+                document.body.classList.add('dark-theme');
+                document.body.classList.remove('light-theme');
+            } else {
+                lightThemeCSS.disabled = false;
+                darkThemeCSS.disabled = true;
+                themeToggle.checked = false;
+                document.body.classList.add('light-theme');
+                document.body.classList.remove('dark-theme');
+            }
+        }
+        
+        // Save theme preference
+        function saveThemePreference(theme) {
+            localStorage.setItem(THEME_STORAGE_KEY, theme);
+        }
+        
+        // Handle theme toggle
+        function handleThemeToggle() {
+            const newTheme = themeToggle.checked ? DARK_THEME : LIGHT_THEME;
+            
+            // Add transition class before making changes
+            document.body.classList.add('theme-transition');
+            
+            // Slight delay to ensure animation starts
+            setTimeout(() => {
+                applyTheme(newTheme);
+                saveThemePreference(newTheme);
+                
+                // Remove transition class after animation completes
+                setTimeout(() => {
+                    document.body.classList.remove('theme-transition');
+                }, 600);
+            }, 50);
+        }
+        
+        // Initialize theme
+        function initTheme() {
+            const initialTheme = getInitialTheme();
+            applyTheme(initialTheme);
+            
+            // Listen for toggle changes
+            themeToggle.addEventListener('change', handleThemeToggle);
+            
+            // Listen for system preference changes
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                    if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+                        applyTheme(e.matches ? DARK_THEME : LIGHT_THEME);
+                    }
+                });
+            }
+        }
+        
+        // Initialize when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTheme);
+        } else {
+            initTheme();
+        }
+    })();
+    </script>
+    
+    <!-- Theme Toggle -->
+    <script>
+        // Add mobile swipe gesture navigation for navbar
+        document.addEventListener('DOMContentLoaded', function() {
+            const navBar = document.querySelector('.main-nav ul');
+            
+            if (!navBar) return;
+            
+            let startX, startScrollLeft, isDown = false;
+            
+            // Only activate on mobile devices
+            if (window.innerWidth <= 768) {
+                // Make navigation scrollable horizontally
+                navBar.style.overflowX = 'auto';
+                navBar.style.scrollBehavior = 'smooth';
+                navBar.style.display = 'flex';
+                navBar.style.flexWrap = 'nowrap';
+                navBar.style.webkitOverflowScrolling = 'touch'; // For momentum scrolling on iOS
+                
+                // Hide scrollbar visually while keeping functionality
+                navBar.style.scrollbarWidth = 'none';  // Firefox
+                navBar.style.msOverflowStyle = 'none';  // IE/Edge
+                
+                // Add a CSS rule for Webkit browsers
+                const style = document.createElement('style');
+                style.textContent = '.main-nav ul::-webkit-scrollbar { display: none; }';
+                document.head.appendChild(style);
+                
+                // Make nav items not shrink
+                const navItems = navBar.querySelectorAll('li');
+                navItems.forEach(item => {
+                    item.style.flexShrink = '0';
+                    item.style.padding = '0 15px';
+                });
+            }
+            
+            // Touch events
+            navBar.addEventListener('touchstart', function(e) {
+                isDown = true;
+                startX = e.touches[0].pageX - navBar.offsetLeft;
+                startScrollLeft = navBar.scrollLeft;
+            });
+            
+            navBar.addEventListener('touchend', function() {
+                isDown = false;
+            });
+            
+            navBar.addEventListener('touchmove', function(e) {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.touches[0].pageX - navBar.offsetLeft;
+                const walk = (x - startX) * 1.5; // Scroll speed multiplier
+                navBar.scrollLeft = startScrollLeft - walk;
+            });
+            
+            // Add scroll indicators if there's overflow
+            function updateScrollIndicators() {
+                const isScrollable = navBar.scrollWidth > navBar.clientWidth;
+                
+                if (isScrollable && !document.querySelector('.nav-scroll-indicator')) {
+                    const leftIndicator = document.createElement('div');
+                    leftIndicator.className = 'nav-scroll-indicator left';
+                    leftIndicator.innerHTML = '&lsaquo;';
+                    
+                    const rightIndicator = document.createElement('div');
+                    rightIndicator.className = 'nav-scroll-indicator right';
+                    rightIndicator.innerHTML = '&rsaquo;';
+                    
+                    const navContainer = navBar.parentElement;
+                    navContainer.style.position = 'relative';
+                    navContainer.appendChild(leftIndicator);
+                    navContainer.appendChild(rightIndicator);
+                    
+                    // Add events to indicators
+                    leftIndicator.addEventListener('click', () => {
+                        navBar.scrollBy({ left: -100, behavior: 'smooth' });
+                    });
+                    
+                    rightIndicator.addEventListener('click', () => {
+                        navBar.scrollBy({ left: 100, behavior: 'smooth' });
+                    });
+                    
+                    // Update indicator visibility on scroll
+                    navBar.addEventListener('scroll', updateIndicatorVisibility);
+                    updateIndicatorVisibility();
+                }
+            }
+            
+            function updateIndicatorVisibility() {
+                const leftIndicator = document.querySelector('.nav-scroll-indicator.left');
+                const rightIndicator = document.querySelector('.nav-scroll-indicator.right');
+                
+                if (leftIndicator && rightIndicator) {
+                    leftIndicator.style.opacity = navBar.scrollLeft > 10 ? '1' : '0';
+                    rightIndicator.style.opacity = 
+                        navBar.scrollLeft < (navBar.scrollWidth - navBar.clientWidth - 10) ? '1' : '0';
+                }
+            }
+            
+            // Initialize on mobile devices
+            if (window.innerWidth <= 768) {
+                setTimeout(updateScrollIndicators, 500); // Delay to ensure DOM is fully loaded
+            }
+        });
+    </script>
+
+    <!-- Replace the entire swipe navigation script with a fixed version -->
+    <script>
+    // Mobile swipe navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Only run this on mobile
+        if (window.innerWidth <= 768) {
+            setupMobileNavigation();
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 768) {
+                setupMobileNavigation();
+            } else {
+                cleanupMobileNavigation();
+            }
+        });
+        
+        function setupMobileNavigation() {
+            // Constants and config - REMOVE hero section from the main navigation flow
+            const sectionIds = ['predictor', 'chatbot', 'moodmotion', 'history', 'about'];
+            const swipeThreshold = 15; // swipe threshold for mobile
+            
+            // Get elements
+            const mainContent = document.getElementById('swipeable-content');
+            const bottomNavItems = document.querySelectorAll('.bottom-nav-item');
+            const sections = document.querySelectorAll('.page-section');
+            
+            // Hide hero section on mobile after initial load
+            const heroSection = document.getElementById('hero-section');
+            if (heroSection) {
+                // Keep hero visible initially, but it won't be part of the swipe navigation
+                heroSection.style.display = 'block';
+                heroSection.classList.add('hero-only-initial');
+            }
+            
+            // Variables for touch handling
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let currentIndex = 0; // Start with predictor (index 0 in our new array)
+            let isVerticalScroll = false;
+            
+            // Show bottom nav
+            const bottomNav = document.getElementById('bottom-nav');
+            if (bottomNav) {
+                bottomNav.style.display = 'flex';
+            }
+            
+            // Position all sections properly with correct padding
+            sections.forEach((section) => {
+                if (section.id === 'hero-section') return; // Skip hero section
+                
+                // Fix positioning to avoid content going under elements
+                section.style.width = '100%';
+                section.style.minHeight = '100%';
+                section.style.position = 'absolute';
+                section.style.left = '0';
+                section.style.right = '0';
+                section.style.top = '0'; 
+                section.style.bottom = '65px'; // Increased to match bottom nav height
+                section.style.transition = 'transform 0.3s ease';
+                section.style.overflow = 'auto';
+                section.style.paddingTop = '15px'; // Reduced top padding
+                section.style.paddingBottom = '80px'; // Add bottom padding to avoid content being hidden
+                section.style.display = 'block';
+                section.style.height = 'calc(100% - 65px)'; // Full height minus bottom nav
+                section.style.overflowX = 'hidden'; // Prevent horizontal scrolling
+                section.style.maxWidth = '100vw'; // Ensure no horizontal overflow
+                
+                // Fix the content width for mobile
+                const containers = section.querySelectorAll('.container');
+                containers.forEach(container => {
+                    container.style.width = 'calc(100% - 20px)';
+                    container.style.maxWidth = 'calc(100% - 20px)';
+                    container.style.padding = '0 10px';
+                    container.style.margin = '0 auto';
+                    container.style.boxSizing = 'border-box';
+                });
+            });
+            
+            // Hide all main sections initially except predictor
+            sections.forEach((section) => {
+                if (section.id === 'hero-section') return; // Skip hero section
+                
+                const sectionIndex = sectionIds.indexOf(section.id);
+                
+                if (sectionIndex === 0) { // Predictor section (first in our array)
+                    section.style.transform = 'translateX(0)';
+                    section.style.opacity = '1';
+                    section.style.zIndex = '1';
+                } else if (sectionIndex > 0) {
+                    section.style.transform = 'translateX(100%)';
+                    section.style.opacity = '0';
+                    section.style.zIndex = '0';
+                }
+            });
+            
+            // Update active nav item
+            function updateNavItems() {
+                bottomNavItems.forEach((item, index) => {
+                    if (index === currentIndex) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+                
+                // Update debug message
+                const debugSpan = document.getElementById('current-section-debug');
+                if (debugSpan && currentIndex < sectionIds.length) {
+                    debugSpan.textContent = sectionIds[currentIndex];
+                }
+            }
+            
+            // Helper to navigate to a section
+            function goToSection(index, animate = true) {
+                if (index < 0 || index >= sectionIds.length) return;
+                
+                // COMPLETELY hide hero section
+                if (heroSection) {
+                    heroSection.style.display = 'none';
+                    heroSection.style.opacity = '0';
+                    heroSection.style.zIndex = '-1';
+                    heroSection.style.visibility = 'hidden';
+                    heroSection.style.position = 'absolute';
+                    heroSection.style.top = '-9999px';
+                }
+                
+                const direction = index > currentIndex ? 'right' : 'left';
+                const oldIndex = currentIndex;
+                currentIndex = index;
+                
+                // Show the target section
+                sections.forEach((section) => {
+                    if (section.id === 'hero-section') return; // Skip hero section
+                    
+                    const sectionIndex = sectionIds.indexOf(section.id);
+                    if (sectionIndex === -1) return; // Skip if not in our main sections
+                    
+                    if (sectionIndex === index) {
+                        // Target section comes in
+                        section.style.transition = animate ? 'transform 0.3s ease, opacity 0.3s ease' : 'none';
+                        section.style.transform = 'translateX(0)';
+                        section.style.opacity = '1';
+                        section.style.zIndex = '1';
+                        section.style.width = '100vw';
+                        section.style.maxWidth = '100%';
+                    } else if (sectionIndex === oldIndex) {
+                        // Current section leaves
+                        section.style.transition = animate ? 'transform 0.3s ease, opacity 0.3s ease' : 'none';
+                        if (direction === 'right') {
+                            section.style.transform = 'translateX(-100%)';
+                        } else {
+                            section.style.transform = 'translateX(100%)';
+                        }
+                        section.style.opacity = '0';
+                        section.style.zIndex = '0';
+                    } else if (sectionIndex < index) {
+                        // Sections before target
+                        section.style.transition = 'none';
+                        section.style.transform = 'translateX(-100%)';
+                        section.style.opacity = '0';
+                        section.style.zIndex = '0';
+                    } else {
+                        // Sections after target
+                        section.style.transition = 'none';
+                        section.style.transform = 'translateX(100%)';
+                        section.style.opacity = '0';
+                        section.style.zIndex = '0';
+                    }
+                });
+                
+                // Save the current section
+                localStorage.setItem('activeSection', sectionIds[index]);
+                
+                // Update navigation
+                updateNavItems();
+                
+                // Debug
+                console.log(`Navigated to section: ${sectionIds[index]}`);
+            }
+            
+            // Initialize based on saved section
+            function initializeSection() {
+                const savedSection = localStorage.getItem('activeSection');
+                
+                // If coming from hero section or first visit, show predictor
+                if (savedSection === 'hero-section' || !savedSection) {
+                    goToSection(0, false); // Go to predictor (index 0) without animation
+                    return;
+                }
+                
+                const savedIndex = sectionIds.indexOf(savedSection);
+                if (savedIndex !== -1) {
+                    // Use the saved section
+                    goToSection(savedIndex, false);
+                } else {
+                    // Default to predictor section
+                    goToSection(0, false);
+                }
+            }
+            
+            // Handle touch events for swipe navigation
+            function handleTouchStart(e) {
+                if (e.target.closest('#hero-section')) return; // Don't handle swipes on hero section
+                
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isVerticalScroll = false;
+            }
+            
+            function handleTouchMove(e) {
+                if (e.target.closest('#hero-section')) return; // Don't handle swipes on hero section
+                if (e.touches.length === 0) return;
+                
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                
+                // Calculate distances
+                const diffX = touchX - touchStartX;
+                const diffY = Math.abs(touchY - touchStartY);
+                
+                // Detect vertical scrolling
+                if (diffY > 10 && diffY > Math.abs(diffX)) {
+                    isVerticalScroll = true;
+                    return;
+                }
+                
+                // Handle horizontal swipe in real-time
+                if (!isVerticalScroll && Math.abs(diffX) > 10) {
+                    // Prevent default scrolling when swiping horizontally
+                    e.preventDefault();
+                    
+                    // Find the actual section elements based on our section IDs array
+                    const currentSectionEl = document.getElementById(sectionIds[currentIndex]);
+                    const nextSectionId = diffX < 0 ? sectionIds[currentIndex + 1] : null;
+                    const prevSectionId = diffX > 0 ? sectionIds[currentIndex - 1] : null;
+                    
+                    const nextSectionEl = nextSectionId ? document.getElementById(nextSectionId) : null;
+                    const prevSectionEl = prevSectionId ? document.getElementById(prevSectionId) : null;
+                    
+                    // Move current section
+                    if (currentSectionEl) {
+                        const movePercent = (diffX / window.innerWidth) * 100;
+                        currentSectionEl.style.transition = 'none';
+                        currentSectionEl.style.transform = `translateX(${movePercent}%)`;
+                        currentSectionEl.style.opacity = Math.max(0, 1 - Math.abs(movePercent) / 100);
+                    }
+                    
+                    // Show & move the next section
+                    if (nextSectionEl && diffX < 0) {
+                        const movePercent = 100 + (diffX / window.innerWidth) * 100;
+                        nextSectionEl.style.transition = 'none';
+                        nextSectionEl.style.transform = `translateX(${movePercent}%)`;
+                        nextSectionEl.style.opacity = Math.min(1, Math.abs(diffX) / swipeThreshold);
+                        nextSectionEl.style.zIndex = '1';
+                    }
+                    
+                    // Show & move the previous section
+                    if (prevSectionEl && diffX > 0) {
+                        const movePercent = -100 + (diffX / window.innerWidth) * 100;
+                        prevSectionEl.style.transition = 'none';
+                        prevSectionEl.style.transform = `translateX(${movePercent}%)`;
+                        prevSectionEl.style.opacity = Math.min(1, Math.abs(diffX) / swipeThreshold);
+                        prevSectionEl.style.zIndex = '1';
+                    }
+                }
+            }
+            
+            function handleTouchEnd(e) {
+                if (e.target.closest('#hero-section')) return; // Don't handle swipes on hero section
+                
+                // Don't process if we were scrolling vertically
+                if (isVerticalScroll) return;
+                
+                const touchEndX = e.changedTouches[0].clientX;
+                const diffX = touchEndX - touchStartX;
+                
+                // Check if we've passed threshold for a swipe
+                if (Math.abs(diffX) > swipeThreshold) {
+                    if (diffX < 0 && currentIndex < sectionIds.length - 1) {
+                        // Swipe left - go to next section
+                        goToSection(currentIndex + 1);
+                    } else if (diffX > 0 && currentIndex > 0) {
+                        // Swipe right - go to previous section
+                        goToSection(currentIndex - 1);
+                    } else {
+                        // Return to current section (snap back)
+                        goToSection(currentIndex);
+                    }
+                } else {
+                    // Return to current section (snap back)
+                    goToSection(currentIndex);
+                }
+            }
+            
+            // Set up event listeners
+            mainContent.addEventListener('touchstart', handleTouchStart, { passive: true });
+            mainContent.addEventListener('touchmove', handleTouchMove, { passive: false });
+            mainContent.addEventListener('touchend', handleTouchEnd, { passive: true });
+            
+            // Handle bottom nav clicks
+            bottomNavItems.forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    const sectionId = item.getAttribute('data-section');
+                    const targetIndex = sectionIds.indexOf(sectionId);
+                    if (targetIndex !== -1) {
+                        goToSection(targetIndex);
+                    }
+                });
+            });
+            
+            // Handle "Get Started" button - direct to predictor without animation
+            const getStartedBtn = document.querySelector('.hero-section .btn-primary');
+            if (getStartedBtn) {
+                getStartedBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    heroSection.style.display = 'none'; // Hide hero section
+                    goToSection(0); // Go to predictor (index 0)
+                });
+            }
+            
+            // Initialize
+            initializeSection();
+        }
+        
+        function cleanupMobileNavigation() {
+            // Hide bottom nav
+            const bottomNav = document.getElementById('bottom-nav');
+            if (bottomNav) {
+                bottomNav.style.display = 'none';
+            }
+            
+            // Restore sections to normal
+            const sections = document.querySelectorAll('.page-section');
+            sections.forEach((section) => {
+                section.style.position = '';
+                section.style.left = '';
+                section.style.right = '';
+                section.style.top = '';
+                section.style.bottom = '';
+                section.style.transform = '';
+                section.style.transition = '';
+                section.style.opacity = '1';
+                section.style.zIndex = '';
+                section.style.paddingTop = '';
+                section.style.paddingBottom = '';
+                section.style.height = '';
+            });
+            
+            // Show hero section again on desktop
+            const heroSection = document.getElementById('hero-section');
+            if (heroSection) {
+                heroSection.style.display = 'block';
+            }
+        }
+    });
+    </script>
+
+    <style>
+    /* Fix page section display and scrolling */
+    .page-section {
+        display: block;
+        position: relative;
+        width: 100%;
+    }
+
+    /* Bottom nav styles with better positioning */
+    .bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 65px;
+        background-color: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 9999; 
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
+        justify-content: space-around;
+        align-items: center;
+        padding: 0 15px;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .bottom-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.6);
+        height: 100%;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+        transition: all 0.3s ease;
+        padding: 8px 0;
+        width: 70px;
+        position: relative;
+        border-radius: 12px;
+        margin: 0 2px;
+    }
+
+    .bottom-nav-item.active {
+        color: white;
+        background-color: rgba(125, 73, 151, 0.4);
+        box-shadow: 0 4px 15px rgba(125, 73, 151, 0.3);
+    }
+
+    .bottom-nav-item i {
+        font-size: 22px;
+        margin-bottom: 4px;
+    }
+
+    .bottom-nav-item span {
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .bottom-nav-item.active i {
+        transform: scale(1.15);
+    }
+
+    /* For mobile specifics */
+    @media (max-width: 768px) {
+        /* Create proper spacing and fix content width */
+        .app-main {
+            padding-bottom: 80px;
+            position: relative;
+            overflow: hidden;
+            width: 100vw;
+            max-width: 100%;
+        }
+        
+        /* Make content fit perfectly on mobile */
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Fix hero section visibility issues */
+        #hero-section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: -1;
+            opacity: 0;
+            display: none !important;
+        }
+        
+        /* Hide top navigation on mobile */
+        .main-nav {
+            display: none !important;
+        }
+        
+        /* Improve bottom indicator visibility */
+        .bottom-nav-item.active::after {
+            display: none; /* Remove the underline indicator since we're using box background */
+        }
+        
+        /* Make sure sections fit properly */
+        .page-section {
+            overflow-x: hidden;
+            box-sizing: border-box;
+            width: 100vw !important;
+            max-width: 100vw !important;
+        }
+        
+        /* Fix scrolling issues */
+        .page-section.active-section {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+    </style>
+
+    <!-- Fix header layout for mobile -->
+    <style>
+    /* Improved header layout for mobile */
+    @media (max-width: 768px) {
+        .header-content {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+        }
+        
+        .logo {
+            flex: 0 0 auto !important;
+            text-align: left !important;
+            margin-bottom: 0 !important;
+        }
+        
+        .logo h1 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0 !important;
+        }
+        
+        .logo span {
+            font-size: 0.7rem !important;
+        }
+        
+        .auth-actions {
+            flex: 0 0 auto !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+        }
+        
+        .main-nav {
+            display: none !important;
+        }
+        
+        .theme-toggle-wrapper {
+            margin-right: 5px !important;
+        }
+        
+        .theme-toggle-label {
+            width: 36px !important;
+            height: 20px !important;
+        }
+        
+        .theme-toggle-ball {
+            width: 16px !important;
+            height: 16px !important;
+            top: 2px !important;
+        }
+        
+        .theme-toggle:checked + .theme-toggle-label .theme-toggle-ball {
+            transform: translateX(16px) !important;
+        }
+        
+        .theme-toggle-label .fa-sun, 
+        .theme-toggle-label .fa-moon {
+            font-size: 10px !important;
+        }
+        
+        #auth-status-logged-out button, 
+        #auth-status-logged-in button {
+            padding: 0.15rem 0.4rem !important;
+            font-size: 0.7rem !important;
+        }
+        
+        #welcome-user {
+            font-size: 0.7rem !important;
+            max-width: 60px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+    }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Remove debug message
+        const debugMsg = document.getElementById('debug-message');
+        if (debugMsg) {
+            debugMsg.style.display = 'none';
+            debugMsg.remove();
+        }
+        
+        // Disable debug message functions
+        window.showDebugMessage = function() {};
+        window.updateDebugMessage = function() {};
+    });
+    </script>
+
+    <style>
+    /* Enhanced mobile styling fixes */
+    @media (max-width: 768px) {
+        /* ===== LAYOUT FIXES ===== */
+        /* Better container sizing */
+        .container {
+            width: calc(100% - 20px) !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 10px !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* Fix section layouts */
+        .page-section {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            padding-bottom: 80px !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Section headers */
+        .section-header {
+            margin-bottom: 15px !important;
+        }
+        
+        .section-header h2 {
+            font-size: 1.5rem !important;
+            margin-bottom: 5px !important;
+        }
+        
+        .section-header p {
+            font-size: 0.9rem !important;
+            margin-bottom: 10px !important;
+        }
+        
+        /* ===== CARD FIXES ===== */
+        /* Fix card layouts */
+        .food-info-card, .impact-card {
+            width: 100% !important;
+            min-width: unset !important;
+            padding: 15px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        /* Fix impact indicators */
+        .impact-indicators {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+            margin-top: 15px !important;
+        }
+        
+        .impact-item {
+            padding: 10px 5px !important;
+        }
+        
+        .impact-icon {
+            font-size: 20px !important;
+            margin-bottom: 5px !important;
+        }
+        
+        .impact-label {
+            font-size: 0.75rem !important;
+            margin-bottom: 3px !important;
+        }
+        
+        .impact-value {
+            font-size: 0.85rem !important;
+        }
+        
+        /* ===== FORM FIXES ===== */
+        /* Fix form inputs */
+        .input-group {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        
+        .input-group input {
+            padding: 10px 15px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .input-group button {
+            padding: 0 15px !important;
+        }
+        
+        /* ===== CHAT FIXES ===== */
+        /* Fix chat container */
+        .chat-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            border-radius: 10px !important;
+        }
+        
+        .chat-messages {
+            padding: 15px !important;
+        }
+        
+        .message-content {
+            max-width: 80% !important;
+            padding: 8px 12px !important;
+        }
+        
+        /* ===== BOTTOM NAV REDESIGN ===== */
+        /* Elevated card-style bottom nav */
+        .bottom-nav {
+            height: 65px !important;
+            background-color: rgba(12, 12, 15, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
+            padding: 0 5px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .bottom-nav-item {
+            height: 55px !important;
+            width: 70px !important;
+            margin: 5px 2px !important;
+            padding: 5px 0 !important;
+            border-radius: 12px !important;
+            background-color: transparent !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.3s ease !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+        
+        .bottom-nav-item.active {
+            background-color: rgba(125, 73, 151, 0.4) !important;
+            box-shadow: 0 4px 10px rgba(125, 73, 151, 0.3) !important;
+            color: white !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        .bottom-nav-item i {
+            font-size: 22px !important;
+            margin-bottom: 4px !important;
+        }
+        
+        .bottom-nav-item span {
+            font-size: 11px !important;
+            font-weight: 500 !important;
+        }
+        
+        /* ===== HERO SECTION COMPLETE HIDING ===== */
+        /* Completely hide hero section on mobile after initial view */
+        .hero-only-initial {
+            display: none !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            height: 0 !important;
+            width: 0 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
+        /* App main adjustments for bottom nav */
+        .app-main {
+            padding-bottom: 75px !important;
+        }
+
+        /* Make placeholder text visible in dark mode but black in light mode */
+        .dark-theme input::placeholder,
+        .dark-theme textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+            opacity: 1 !important;
+        }
+        
+        .light-theme input::placeholder,
+        .light-theme textarea::placeholder {
+            color: rgba(0, 0, 0, 0.6) !important;
+            opacity: 1 !important;
+        }
+        
+        /* Target the specific input in the predictor form */
+        .dark-theme .predictor-form .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-weight: 400 !important;
+        }
+        
+        .light-theme .predictor-form .input-group input::placeholder {
+            color: rgba(0, 0, 0, 0.7) !important;
+            font-weight: 400 !important;
+        }
+        
+        /* Fix chat input and send button layout */
+        .chat-input {
+            display: flex !important;
+            padding: 10px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            align-items: center !important;
+            border-top: 1px solid rgba(125, 73, 151, 0.2) !important;
+        }
+        
+        .chat-input input {
+            flex: 1 !important;
+            border-radius: 20px 0 0 20px !important;
+            padding: 10px 15px !important;
+            height: 42px !important;
+            outline: none !important;
+        }
+        
+        /* Theme-specific chat styles */
+        .dark-theme .chat-input {
+            background-color: rgba(20, 20, 25, 0.8) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .light-theme .chat-input {
+            background-color: rgba(240, 240, 245, 0.8) !important;
+            border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .dark-theme .chat-input input {
+            background-color: rgba(30, 30, 35, 0.9) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        .light-theme .chat-input input {
+            background-color: white !important;
+            color: #333 !important;
+            border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        /* Chat button styling for both themes */
+        .chat-input button {
+            border-radius: 0 20px 20px 0 !important;
+            height: 42px !important;
+            min-width: 50px !important;
+            margin-left: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: none !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .dark-theme .chat-input button {
+            background: linear-gradient(135deg, #7d4997 0%, #5a2e77 100%) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-left: none !important;
+        }
+        
+        .light-theme .chat-input button {
+            background: linear-gradient(135deg, #7d4997 0%, #9653b7 100%) !important;
+            color: white !important;
+            border: 1px solid rgba(0, 0, 0, 0.2) !important;
+            border-left: none !important;
+        }
+        
+        .chat-input button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 10px rgba(125, 73, 151, 0.3) !important;
+        }
+        
+        .chat-input button:active {
+            transform: translateY(0) !important;
+        }
+        
+        /* Bottom nav bar theme adjustments */
+        .dark-theme .bottom-nav {
+            background-color: rgba(12, 12, 15, 0.95) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .light-theme .bottom-nav {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .dark-theme .bottom-nav-item {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+        
+        .light-theme .bottom-nav-item {
+            color: rgba(0, 0, 0, 0.6) !important;
+        }
+        
+        .dark-theme .bottom-nav-item.active {
+            background-color: rgba(125, 73, 151, 0.4) !important;
+            box-shadow: 0 4px 10px rgba(125, 73, 151, 0.3) !important;
+            color: white !important;
+        }
+        
+        .light-theme .bottom-nav-item.active {
+            background-color: rgba(125, 73, 151, 0.2) !important;
+            box-shadow: 0 4px 10px rgba(125, 73, 151, 0.2) !important;
+            color: #7d4997 !important;
+        }
+        
+        /* Mobile specific chat fixes with better light theme support */
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+            }
+            
+            .chat-input {
+                padding: 8px 10px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                margin: 0 !important;
+            }
+            
+            .chat-input input {
+                font-size: 0.9rem !important;
+                width: calc(100% - 55px) !important;
+                min-width: 0 !important;
+                flex: 1 0 auto !important;
+            }
+            
+            .chat-input button {
+                width: 50px !important;
+                min-width: 50px !important;
+                flex: 0 0 50px !important;
+                margin-left: 0 !important;
+            }
+            
+            /* Fix for light theme specifically */
+            .light-theme .chat-container {
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+            
+            .light-theme .chat-input {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 8px 10px !important;
+                display: flex !important;
+                flex-wrap: nowrap !important;
+            }
+            
+            .light-theme .chat-input button {
+                opacity: 1 !important;
+                visibility: visible !important;
+                position: relative !important;
+                right: 0 !important;
+                background: linear-gradient(135deg, #7d4997 0%, #9653b7 100%) !important;
+                color: white !important;
+                border: 1px solid rgba(0, 0, 0, 0.2) !important;
+                border-left: none !important;
+            }
+        }
+    }
+
+    /* Dark theme styles for MoodMotion section */
+    .dark-theme .moodmotion-form.card {
+        background-color: rgba(30, 30, 35, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .dark-theme .moodmotion-form .form-label {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .dark-theme .moodmotion-form .form-select,
+    .dark-theme .moodmotion-form .form-control {
+        background-color: rgba(20, 20, 25, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .dark-theme .moodmotion-form .form-select:focus,
+    .dark-theme .moodmotion-form .form-control:focus {
+        background-color: rgba(25, 25, 30, 0.95) !important;
+        border-color: rgba(125, 73, 151, 0.5) !important;
+        box-shadow: 0 0 0 0.25rem rgba(125, 73, 151, 0.25) !important;
+    }
+
+    .dark-theme .moodmotion-form .form-select option {
+        background-color: rgb(30, 30, 35) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    /* Light theme enhancements for consistency */
+    .light-theme .moodmotion-form.card {
+        background-color: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .light-theme .moodmotion-form .form-select,
+    .light-theme .moodmotion-form .form-control {
+        background-color: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        color: #333 !important;
+    }
+
+    .light-theme .moodmotion-form .form-select:focus,
+    .light-theme .moodmotion-form .form-control:focus {
+        border-color: rgba(125, 73, 151, 0.5) !important;
+        box-shadow: 0 0 0 0.25rem rgba(125, 73, 151, 0.25) !important;
+    }
+    </style>
+    <!-- PWA Script -->
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+</body>
+</html> 
